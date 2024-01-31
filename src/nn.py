@@ -1,9 +1,9 @@
-import pickle
 import numpy as np
 from src.functions import Sigmoid, ReLU, LogLoss
+from src.utilities.utility_classes import SavableModel
 
 
-class NeuralNetwork:
+class NeuralNetwork(SavableModel):
     # TODO separate classes
     def __init__(self, options):
         self.options = options
@@ -145,12 +145,3 @@ class NeuralNetwork:
         else:
             raise Exception('Unknown loss function: ' + self.options['loss_function'])
 
-    def save(self, file):
-        pickle.dump({'parameters': self.parameters, 'options': self.options}, open(file, 'wb'))
-
-    @staticmethod
-    def load(file):
-        data = pickle.load(open(file, 'rb'))
-        nn = NeuralNetwork(data['options'])
-        nn.parameters = data['parameters']
-        return nn
