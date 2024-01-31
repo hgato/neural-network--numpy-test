@@ -1,3 +1,5 @@
+import datetime
+
 import h5py
 from src.nn import NeuralNetwork
 
@@ -39,4 +41,4 @@ if __name__ == '__main__':
     }
     nn = NeuralNetwork(example_options)
     nn.fit(X, Y, 7500)
-    nn.save('save/2.pickle')
+    nn.save('save/{}.pickle'.format(str(datetime.date.today())))

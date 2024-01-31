@@ -1,6 +1,6 @@
 import pickle
 import numpy as np
-from src.functions import log_loss_derivative, log_loss, sigmoid, sigmoid_derivative, relu, relu_derivative
+from src.functions import Sigmoid, ReLU, LogLoss
 
 
 class NeuralNetwork:
@@ -16,6 +16,7 @@ class NeuralNetwork:
             'Z': {},
         }
         self.activation_functions = {}
+        # TODO use layers with options instead of label layers
         self.layer_labels = [str(i + 1) for i in range(0, len(self.options['layers']))]
         self.derivatives = {
             'dZ': {},
@@ -48,7 +49,16 @@ class NeuralNetwork:
     def _set_activation_functions(self):
         for option_layer_index in range(0, len(self.options['layers'])):
             layer_number = self.layer_labels[option_layer_index]
-            self.activation_functions[layer_number] = self.options['layers'][option_layer_index]['activation_function']
+            activation_function_label = self.options['layers'][option_layer_index]['activation_function']
+
+            if activation_function_label == 'sigmoid':
+                function_object = Sigmoid()
+            elif activation_function_label == 'relu':
+                function_object = ReLU()
+            else:
+                raise Exception('Unknown activation function: ' + activation_function_label)
+
+            self.activation_functions[layer_number] = function_object
 
     def fit(self, X, Y, num_iterations):
         # TODO add batch functionality
@@ -61,6 +71,7 @@ class NeuralNetwork:
             loss, dA = self._count_loss(Y, A)
             self._print_loss(loss, iteration_number, num_iterations)
             for l in self.layer_labels[::-1]:
+                # TODO remove shape attribute
                 dA = self._backward_for_layer(dA, l, X.shape[1])
 
     def predict(self, X):
@@ -87,22 +98,22 @@ class NeuralNetwork:
 
     def _calculate_forward(self, A, W, b, activation_function):
         Z = np.dot(W, A) + b
-        A = activation_function(Z)
+        A = activation_function.run(Z)
         return A, Z
 
     def _backward_for_layer(self, dA, l, m):
-        activation_function_derivative = self._get_activation_function_derivative(l)
+        activation_function = self._get_activation_function(l)
         Z = self.cache['Z'][l]
         W = self.parameters['W'][l]
         A_prev = self.cache['A'][str(int(l)-1)]
 
-        dZ, dW, db, dA_prev = self._calculate_backward(dA, Z, m, A_prev, W, activation_function_derivative)
+        dZ, dW, db, dA_prev = self._calculate_backward(dA, Z, m, A_prev, W, activation_function)
 
         self._update_W_b_for_layer(dW, db, l)
         return dA_prev
 
-    def _calculate_backward(self, dA, Z, m, A_prev, W, activation_function_derivative):
-        dZ = dA * activation_function_derivative(Z)
+    def _calculate_backward(self, dA, Z, m, A_prev, W, activation_function):
+        dZ = dA * activation_function.derive(Z)
         dW = 1 / m * np.dot(dZ, A_prev.T)
         db = 1 / m * np.sum(dZ, axis=1, keepdims=True)
 
@@ -121,32 +132,18 @@ class NeuralNetwork:
 
     def _count_loss(self, Y, A):
         loss_function = self._get_loss_function()
-        loss = loss_function(Y, A)
-
-        loss_function_derivative = self._get_loss_function_derivative()
-        dA = loss_function_derivative(Y, A)
+        loss = loss_function.run(Y, A)
+        dA = loss_function.derive(Y, A)
         return loss, dA
 
-    # TODO implement class functions
     def _get_activation_function(self, l):
-        if self.activation_functions[l] == 'sigmoid':
-            return sigmoid
-        if self.activation_functions[l] == 'relu':
-            return relu
-
-    def _get_activation_function_derivative(self, l):
-        if self.activation_functions[l] == 'sigmoid':
-            return sigmoid_derivative
-        if self.activation_functions[l] == 'relu':
-            return relu_derivative
+        return self.activation_functions[l]
 
     def _get_loss_function(self):
         if self.options['loss_function'] == 'log_loss':
-            return log_loss
-
-    def _get_loss_function_derivative(self):
-        if self.options['loss_function'] == 'log_loss':
-            return log_loss_derivative
+            return LogLoss()
+        else:
+            raise Exception('Unknown loss function: ' + self.options['loss_function'])
 
     def save(self, file):
         pickle.dump({'parameters': self.parameters, 'options': self.options}, open(file, 'wb'))
