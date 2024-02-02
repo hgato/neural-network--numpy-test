@@ -18,24 +18,25 @@ def load_dataset():
 
 if __name__ == '__main__':
     X, Y = load_dataset()
+    # TODO make options and layers classes
     example_options = {
         'num_features': X.shape[0],
         'layers': [
             {
                 'n': 32,
-                'default_weight_multiplier': 1,
+                'initial_weight_multiplier': 'he',
                 'activation_function': 'relu',
                 'learning_rate': 0.001,
             },
             {
                 'n': 8,
-                'default_weight_multiplier': 1,
+                'initial_weight_multiplier': 'he',
                 'activation_function': 'relu',
                 'learning_rate': 0.001,
             },
             {
                 'n': 1,
-                'default_weight_multiplier': 1,
+                'initial_weight_multiplier': 'he',
                 'activation_function': 'sigmoid',
                 'learning_rate': 0.001,
             },

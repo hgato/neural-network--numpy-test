@@ -45,24 +45,6 @@ class NeuralNetwork(SavableModel, PrintableModel):
             A = self._forward_for_layer(A, layer)
         return A
 
-    def _initialize_weights_biases(self):
-        prev_layer = None
-        for layer in self.layers:
-            n2 = layer['n']
-            if not prev_layer:
-                n1 = self.options['num_features']
-            else:
-                n1 = prev_layer['n']
-
-            w_shape = (n2, n1)
-            b_shape = (n2, 1)
-
-            default_weight_multiplier = layer['default_weight_multiplier']
-            # TODO add options for weight initialization
-            self.parameters['W'][layer['l']] = np.random.randn(w_shape[0], w_shape[1]) * default_weight_multiplier
-            self.parameters['b'][layer['l']] = np.zeros(b_shape)
-            prev_layer = layer
-
     def _forward_for_layer(self, A, layer):
         l = layer['l']
         W = self.parameters['W'][l]
@@ -147,3 +129,27 @@ class NeuralNetwork(SavableModel, PrintableModel):
             return ReLU()
         else:
             raise Exception('Unknown activation function: ' + name)
+
+    def _initialize_weights_biases(self):
+        prev_layer = None
+        for layer in self.layers:
+            n2 = layer['n']
+            if not prev_layer:
+                n1 = self.options['num_features']
+            else:
+                n1 = prev_layer['n']
+
+            w_shape = (n2, n1)
+            b_shape = (n2, 1)
+
+            self.parameters['W'][layer['l']] = np.random.randn(w_shape[0], w_shape[1]) * self._get_initial_weight_multiplier(layer, w_shape)
+            self.parameters['b'][layer['l']] = np.zeros(b_shape)
+            prev_layer = layer
+
+    def _get_initial_weight_multiplier(self, layer, w_shape):
+        init_mult = layer['initial_weight_multiplier']
+        if type(init_mult) is int or type(init_mult) is float:
+            return init_mult
+        if init_mult == 'he':
+            return np.sqrt(2 / w_shape[1])
+        raise Exception('Unknown weight multiplier: ' + str(init_mult))
