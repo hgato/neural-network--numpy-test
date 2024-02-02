@@ -21,6 +21,7 @@ if __name__ == '__main__':
     # TODO make options and layers classes
     example_options = {
         'num_features': X.shape[0],
+        'regularization_strength': 0.0,
         'layers': [
             {
                 'n': 32,

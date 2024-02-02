@@ -91,6 +91,9 @@ class NeuralNetwork(SavableModel, PrintableModel):
         dW = 1 / m * np.dot(dZ, A_prev.T)
         db = 1 / m * np.sum(dZ, axis=1, keepdims=True)
 
+        #regularization
+        dW += (self.options['regularization_strength'] / m * W)
+
         dA_prev = np.dot(W.T, dZ)
         return dZ, dW, db, dA_prev
 
@@ -119,6 +122,12 @@ class NeuralNetwork(SavableModel, PrintableModel):
     def _count_loss(self, Y, A):
         loss_function = self._get_loss_function()
         loss = loss_function.run(Y, A)
+
+        # regularization
+        loss += (1 / Y.shape[1] *
+                 self.options['regularization_strength'] / 2 *
+                 sum([np.sum(W) for W in self.parameters['W'].values()]))
+
         dA = loss_function.derive(Y, A)
         return loss, dA
 
