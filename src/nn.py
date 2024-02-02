@@ -17,8 +17,6 @@ class NeuralNetwork(SavableModel):
             'Z': {},
         }
         self.activation_functions = {}
-        # TODO use layers with options instead of label layers
-        self.layer_labels = [str(i + 1) for i in range(0, len(self.options['layers']))]
         self.derivatives = {
             'dZ': {},
             'dA': {},
@@ -58,8 +56,7 @@ class NeuralNetwork(SavableModel):
             loss, dA = self._count_loss(Y, A)
             self._print_loss(loss, iteration_number, num_iterations)
             for layer in self.layers[::-1]:
-                # TODO remove shape attribute
-                dA = self._backward_for_layer(dA, layer, X.shape[1])
+                dA = self._backward_for_layer(dA, layer)
 
     def predict(self, X):
         A = X
@@ -88,7 +85,8 @@ class NeuralNetwork(SavableModel):
         A = activation_function.run(Z)
         return A, Z
 
-    def _backward_for_layer(self, dA, layer, m):
+    def _backward_for_layer(self, dA, layer):
+        m = dA.shape[1]
         l = layer['l']
         Z = self.cache['Z'][l]
         W = self.parameters['W'][l]
@@ -96,7 +94,7 @@ class NeuralNetwork(SavableModel):
 
         dZ, dW, db, dA_prev = self._calculate_backward(dA, Z, m, A_prev, W, layer['activation_function'])
 
-        self._update_W_b_for_layer(dW, db, l)
+        self._update_W_b_for_layer(dW, db, layer)
         return dA_prev
 
     def _calculate_backward(self, dA, Z, m, A_prev, W, activation_function):
@@ -107,15 +105,22 @@ class NeuralNetwork(SavableModel):
         dA_prev = np.dot(W.T, dZ)
         return dZ, dW, db, dA_prev
 
-    def _update_W_b_for_layer(self, dW, db, l):
-        # TODO remove hardcode
-        learning_rate = 0.0075
+    def _update_W_b_for_layer(self, dW, db, layer):
+        learning_rate = layer['learning_rate']
+        l = layer['l']
+
         W = self.parameters['W'][l]
         b = self.parameters['b'][l]
-        W = W - learning_rate * dW
-        b = b - learning_rate * db
+
+        W, b = self._calculate_update_W_b(W, dW, b, db, learning_rate)
+
         self.parameters['W'][l] = W
         self.parameters['b'][l] = b
+
+    def _calculate_update_W_b(self, W, dW, b, db, learning_rate):
+        W = W - learning_rate * dW
+        b = b - learning_rate * db
+        return W, b
 
     def _count_loss(self, Y, A):
         loss_function = self._get_loss_function()

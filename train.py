@@ -25,16 +25,19 @@ if __name__ == '__main__':
                 'n': 32,
                 'default_weight_multiplier': 1,
                 'activation_function': 'relu',
+                'learning_rate': 0.001,
             },
             {
                 'n': 8,
                 'default_weight_multiplier': 1,
                 'activation_function': 'relu',
+                'learning_rate': 0.001,
             },
             {
                 'n': 1,
                 'default_weight_multiplier': 1,
                 'activation_function': 'sigmoid',
+                'learning_rate': 0.001,
             },
         ],
         'loss_function': 'log_loss'
