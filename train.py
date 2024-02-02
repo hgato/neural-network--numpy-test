@@ -19,7 +19,7 @@ def load_dataset():
 if __name__ == '__main__':
     X, Y = load_dataset()
     example_options = {
-        'input_shape': X.shape,
+        'num_features': X.shape[0],
         'layers': [
             {
                 'n': 32,
