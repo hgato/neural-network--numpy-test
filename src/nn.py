@@ -14,6 +14,7 @@ class NeuralNetwork(SavableModel, PrintableModel):
         self.cache = {
             'A': {},
             'Z': {},
+            'D': {},
         }
         self.activation_functions = {}
         self.derivatives = {
@@ -51,9 +52,11 @@ class NeuralNetwork(SavableModel, PrintableModel):
         b = self.parameters['b'][l]
 
         A, Z = self._calculate_forward(A, W, b, layer['activation_function'])
+        A, D = self._apply_dropout_forward(A, layer['keep_probability'])
 
         self.cache['Z'][l] = Z
         self.cache['A'][l] = A
+        self.cache['D'][l] = D
 
         return A
 
@@ -62,13 +65,22 @@ class NeuralNetwork(SavableModel, PrintableModel):
         A = activation_function.run(Z)
         return A, Z
 
+    def _apply_dropout_forward(self, A, keep_probability):
+        D = np.random.rand(A.shape[0], A.shape[1])
+        D = (D < keep_probability).astype(int)
+        A = A * D
+        A /= keep_probability
+        return A, D
+
     def _backward_for_layer(self, dA, layer):
         m = dA.shape[1]
         l = layer['l']
         Z = self.cache['Z'][l]
+        D = self.cache['D'][l]
         W = self.parameters['W'][l]
         A_prev = self.cache['A'][str(int(l)-1)]
 
+        dA = self._apply_dropout_backward(dA, layer, D)
         dZ, dW, db, dA_prev = self._calculate_backward(dA, Z, m, A_prev, W, layer['activation_function'])
 
         self._update_W_b_for_layer(dW, db, layer)
@@ -81,6 +93,11 @@ class NeuralNetwork(SavableModel, PrintableModel):
 
         dA_prev = np.dot(W.T, dZ)
         return dZ, dW, db, dA_prev
+
+    def _apply_dropout_backward(self, dA_prev, layer, D):
+        dA_prev = dA_prev * D
+        dA_prev /= layer['keep_probability']
+        return dA_prev
 
     def _update_W_b_for_layer(self, dW, db, layer):
         learning_rate = layer['learning_rate']

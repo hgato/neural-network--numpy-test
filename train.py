@@ -27,18 +27,21 @@ if __name__ == '__main__':
                 'initial_weight_multiplier': 'he',
                 'activation_function': 'relu',
                 'learning_rate': 0.001,
+                'keep_probability': 1.0,
             },
             {
                 'n': 8,
                 'initial_weight_multiplier': 'he',
                 'activation_function': 'relu',
                 'learning_rate': 0.001,
+                'keep_probability': 1.0,
             },
             {
                 'n': 1,
                 'initial_weight_multiplier': 'he',
                 'activation_function': 'sigmoid',
                 'learning_rate': 0.001,
+                'keep_probability': 1.0,
             },
         ],
         'loss_function': 'log_loss'
