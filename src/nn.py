@@ -1,10 +1,9 @@
 import numpy as np
 from src.functions import Sigmoid, ReLU, LogLoss
-from src.utilities.utility_classes import SavableModel
+from src.utilities.utility_classes import SavableModel, PrintableModel
 
 
-class NeuralNetwork(SavableModel):
-    # TODO separate classes
+class NeuralNetwork(SavableModel, PrintableModel):
     def __init__(self, options):
         self.options = options
         self.layers = []
@@ -27,24 +26,6 @@ class NeuralNetwork(SavableModel):
         self._initialize_layers()
         self._initialize_weights_biases()
 
-    def _initialize_weights_biases(self):
-        prev_layer = None
-        for layer in self.layers:
-            n2 = layer['n']
-            if not prev_layer:
-                n1 = self.options['num_features']
-            else:
-                n1 = prev_layer['n']
-
-            w_shape = (n2, n1)
-            b_shape = (n2, 1)
-
-            default_weight_multiplier = layer['default_weight_multiplier']
-            # TODO add options for weight initialization
-            self.parameters['W'][layer['l']] = np.random.randn(w_shape[0], w_shape[1]) * default_weight_multiplier
-            self.parameters['b'][layer['l']] = np.zeros(b_shape)
-            prev_layer = layer
-
     def fit(self, X, Y, num_iterations):
         # TODO add batch functionality
         # TODO decide if num_iterations should be set in options
@@ -64,9 +45,23 @@ class NeuralNetwork(SavableModel):
             A = self._forward_for_layer(A, layer)
         return A
 
-    def _print_loss(self, loss, iteration_number, num_iterations):
-        if iteration_number % 100 == 0 or iteration_number == num_iterations:
-            print('Loss after ', iteration_number, ' iterations: ', loss)
+    def _initialize_weights_biases(self):
+        prev_layer = None
+        for layer in self.layers:
+            n2 = layer['n']
+            if not prev_layer:
+                n1 = self.options['num_features']
+            else:
+                n1 = prev_layer['n']
+
+            w_shape = (n2, n1)
+            b_shape = (n2, 1)
+
+            default_weight_multiplier = layer['default_weight_multiplier']
+            # TODO add options for weight initialization
+            self.parameters['W'][layer['l']] = np.random.randn(w_shape[0], w_shape[1]) * default_weight_multiplier
+            self.parameters['b'][layer['l']] = np.zeros(b_shape)
+            prev_layer = layer
 
     def _forward_for_layer(self, A, layer):
         l = layer['l']
